@@ -1,0 +1,57 @@
+name: Auto Changelog
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - CHANGELOG.md
+
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Generate changelog
+        run: |
+          python3 << "EOF"
+          import subprocess, os
+          cl = "CHANGELOG.md"
+          content = open(cl).read() if os.path.exists(cl) else ""
+          last = subprocess.run(["git","log","-1","--format=%aI","--",cl], capture_output=True, text=True).stdout.strip()
+          cmd = ["git","log",f"{last}..HEAD","--pretty=format:%s"] if last else ["git","log","--pretty=format:%s"]
+          commits = [c for c in subprocess.run(cmd, capture_output=True, text=True).stdout.split("\n") if c.strip()]
+          if not commits: exit(0)
+          cats = {"feat":"Features","fix":"Bug Fixes","docs":"Documentation","chore":"Chores"}
+          buckets = {v:[] for v in cats.values()}
+          other = []
+          for c in commits:
+              found = False
+              for p,cat in cats.items():
+                  if c.startswith(p+":") or c.startswith(p+"("):
+                      buckets[cat].append(c.split(":",1)[1].strip())
+                      found = True; break
+              if not found: other.append(c)
+          entry = "## [Unreleased]\n\n"
+          for cat in ["Features","Bug Fixes","Documentation","Chores"]:
+              if buckets[cat]:
+                  entry += f"### {cat}\n\n" + "".join(f"- {i}\n" for i in buckets[cat]) + "\n"
+          if other:
+              entry += "### Other\n\n" + "".join(f"- {i}\n" for i in other) + "\n"
+          header = "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).\n\n"
+          open(cl,"w").write((header if not content else "") + entry + content)
+          print(f"Updated changelog with {len(commits)} commits")
+          EOF
+      - name: Commit changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet CHANGELOG.md || (git add CHANGELOG.md && git commit -m "docs: auto-update CHANGELOG.md [skip ci]" && git push)
