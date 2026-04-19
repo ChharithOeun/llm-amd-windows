@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Models (large binary files)
+models/
+*.gguf
+*.bin
+*.pt
+*.safetensors
+
+# Chat logs
+chat_log.json
+*.log
+
+# Config with personal settings
+config.json
+*.env
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
