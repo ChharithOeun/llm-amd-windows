@@ -1,0 +1,13 @@
+# LLM inference on AMD GPU via llama.cpp Vulkan backend
+# Install with: pip install -r requirements.txt
+
+# llama.cpp Python bindings — pre-built Vulkan wheel
+# For Vulkan GPU support on AMD/Intel/NVIDIA Windows
+llama-cpp-python[server]>=0.2.90
+
+# HuggingFace model downloads
+huggingface-hub>=0.24.0
+
+# Utilities
+tqdm>=4.66.0
+requests>=2.31.0
